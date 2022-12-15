@@ -1,28 +1,31 @@
 const express = require('express');
 const bodyParser = require('body-parser');
 const { randomBytes } = require('crypto');
+const cors = require('cors');
 
 const app = express();
 app.use(bodyParser.json());
+app.use(cors());
 
 const commentsByPostId = {};
 
 app.get('/posts/:id/comments', (req, res) => {
-    res.send(commentsByPostId);
+  res.send(commentsByPostId[req.params.id] || []);
 });
 
 app.post('/posts/:id/comments', (req, res) => {
-    const id = randomBytes(4).toString('hex');
-    const { title } = req.body;
-    commentsByPostId[id] = {
-        id,
-        title
-    };
-    res.status(201).send(commentsByPostId[id]);
+  const commentId = randomBytes(4).toString('hex');
+  const { content } = req.body;
+
+  const comments = commentsByPostId[req.params.id] || [];
+
+  comments.push({ id: commentId, content });
+
+  commentsByPostId[req.params.id] = comments;
+
+  res.status(201).send(comments);
 });
 
-const commentPort = 4001;
-
-app.listen(commentPort, () => {
-    console.log(`Listening on ${commentPort}`);
+app.listen(4001, () => {
+  console.log('Listening on 4001');
 });
